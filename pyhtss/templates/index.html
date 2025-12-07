@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List - Vazifalar Ro'yxati</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="todo-app">
+            <div class="header">
+                <h1>📝 Vazifalar Ro'yxati</h1>
+                <p class="subtitle">Kunlik vazifalaringizni boshqaring</p>
+            </div>
+            
+            <div class="input-section">
+                <input 
+                    type="text" 
+                    id="todoInput" 
+                    placeholder="Yangi vazifa qo'shing..." 
+                    autocomplete="off"
+                >
+                <button id="addBtn" class="add-btn">Qo'shish</button>
+            </div>
+            
+            <div class="stats">
+                <span id="totalCount">Jami: 0</span>
+                <span id="completedCount">Bajarildi: 0</span>
+            </div>
+            
+            <ul id="todoList" class="todo-list">
+                <!-- Todos will be inserted here -->
+            </ul>
+            
+            <div id="emptyState" class="empty-state">
+                <p>📋 Hozircha vazifalar yo'q</p>
+                <p class="empty-hint">Yuqoridagi maydonga yozib vazifa qo'shing</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM elements
+        const todoInput = document.getElementById('todoInput');
+        const addBtn = document.getElementById('addBtn');
+        const todoList = document.getElementById('todoList');
+        const emptyState = document.getElementById('emptyState');
+        const totalCount = document.getElementById('totalCount');
+        const completedCount = document.getElementById('completedCount');
+        
+        // Load todos on page load
+        loadTodos();
+        
+        // Add todo on button click
+        addBtn.addEventListener('click', addTodo);
+        
+        // Add todo on Enter key
+        todoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+        
+        // Load todos from server
+        async function loadTodos() {
+            try {
+                const response = await fetch('/api/todos');
+                const todos = await response.json();
+                renderTodos(todos);
+                updateStats(todos);
+            } catch (error) {
+                console.error('Error loading todos:', error);
+            }
+        }
+        
+        // Add new todo
+        async function addTodo() {
+            const text = todoInput.value.trim();
+            if (!text) return;
+            
+            try {
+                const response = await fetch('/api/todos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                if (response.ok) {
+                    todoInput.value = '';
+                    loadTodos();
+                }
+            } catch (error) {
+                console.error('Error adding todo:', error);
+            }
+        }
+        
+        // Delete todo
+        async function deleteTodo(id) {
+            try {
+                const response = await fetch(`/api/todos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadTodos();
+                }
+            } catch (error) {
+                console.error('Error deleting todo:', error);
+            }
+        }
+        
+        // Toggle todo completion
+        async function toggleTodo(id) {
+            try {
+                const response = await fetch(`/api/todos/${id}`, {
+                    method: 'PUT'
+                });
+                
+                if (response.ok) {
+                    loadTodos();
+                }
+            } catch (error) {
+                console.error('Error toggling todo:', error);
+            }
+        }
+        
+        // Render todos
+        function renderTodos(todos) {
+            if (todos.length === 0) {
+                todoList.style.display = 'none';
+                emptyState.style.display = 'block';
+            } else {
+                todoList.style.display = 'block';
+                emptyState.style.display = 'none';
+                
+                todoList.innerHTML = todos.map(todo => `
+                    <li class="todo-item ${todo.completed ? 'completed' : ''}">
+                        <div class="todo-content">
+                            <input 
+                                type="checkbox" 
+                                class="todo-checkbox" 
+                                ${todo.completed ? 'checked' : ''}
+                                onchange="toggleTodo(${todo.id})"
+                            >
+                            <span class="todo-text">${escapeHtml(todo.text)}</span>
+                        </div>
+                        <button 
+                            class="delete-btn" 
+                            onclick="deleteTodo(${todo.id})"
+                            title="O'chirish"
+                        >
+                            🗑️
+                        </button>
+                    </li>
+                `).join('');
+            }
+        }
+        
+        // Update statistics
+        function updateStats(todos) {
+            const completed = todos.filter(t => t.completed).length;
+            totalCount.textContent = `Jami: ${todos.length}`;
+            completedCount.textContent = `Bajarildi: ${completed}`;
+        }
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Make functions available globally
+        window.deleteTodo = deleteTodo;
+        window.toggleTodo = toggleTodo;
+    </script>
+</body>
+</html>
+
