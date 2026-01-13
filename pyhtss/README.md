@@ -1,55 +1,66 @@
-# 📝 Todo List - Vazifalar Ro'yxati
+# 📱 TOPIK AI Coach (MVP Demo)
 
-Oddiy va chiroyli Todo List veb-ilovasi. HTML, CSS va Python (Flask) bilan yaratilgan.
+Mobile-first TOPIK II preparation MVP with a Writing Lab, gamification, store, and demo payment flows. This is a single-page Flask app that simulates the required onboarding flow and app shell UI.
 
-## 🚀 Qanday ishga tushirish
+## ✅ Core UX Flow (Demo)
 
-1. **Kerakli kutubxonalarni o'rnating:**
+1. Splash screen
+2. Auth gate (login/register)
+3. Profile setup wizard (required)
+4. Main app shell with bottom navigation
+
+## ✨ Features Included (Front-end MVP)
+
+- Full-screen mobile app shell layout
+- Bottom tab navigation (Overview, Practice, Writing Lab, Store, Profile)
+- Profile setup wizard with username validation and avatar/photo preview
+- UI + explanation language toggles (UZ/RU/EN)
+- Dark/Light theme toggle
+- Writing Lab with prompt selection and AI feedback placeholder
+- Gamification (XP, level, title, coins, streak)
+- Store with demo inventory + coin purchases
+- Demo wallet with Stripe/Local Cards/Crypto payment flows (sandbox only)
+- PWA manifest + service worker for offline shell
+
+## 🚀 Run Locally
+
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Ilovani ishga tushiring:**
+2. Start the app:
    ```bash
    python app.py
    ```
 
-3. **Brauzerda oching:**
+3. Open in your browser:
    ```
    http://localhost:5000
    ```
 
-## ✨ Xususiyatlar
-
-- ✅ Vazifa qo'shish
-- ✅ Vazifani bajarilgan deb belgilash
-- ✅ Vazifani o'chirish
-- ✅ Statistikalar (jami va bajarilgan vazifalar)
-- ✅ Zamonaviy va chiroyli dizayn
-- ✅ Responsive dizayn (mobil qurilmalarda ham ishlaydi)
-- ✅ Ma'lumotlar JSON faylida saqlanadi
-
-## 📁 Fayl tuzilishi
+## 📂 Project Structure
 
 ```
 pyhtss/
-├── app.py              # Flask backend
+├── app.py
 ├── templates/
-│   └── index.html      # HTML shablon
+│   └── index.html
 ├── static/
-│   └── style.css       # CSS stillar
-├── todos.json          # Vazifalar ma'lumotlari (avtomatik yaratiladi)
-├── requirements.txt    # Python kutubxonalari
-└── README.md          # Hujjatlar
+│   ├── style.css
+│   ├── manifest.json
+│   ├── service-worker.js
+│   └── icons/
+│       └── icon.svg
+└── README.md
 ```
 
-## 🎨 Texnologiyalar
+## ⚠️ Notes
 
-- **Backend:** Python Flask
-- **Frontend:** HTML5, CSS3, JavaScript
-- **Ma'lumotlar bazasi:** JSON fayl
+- This MVP uses localStorage for demo state (auth/profile/coins).
+- Payment providers are demo-only and do not process real payments.
+- Use it as a UI/UX prototype for a full Next.js + Supabase build.
 
 ---
 
-Yaxshi kodlash! 🎉
-
+Built for TOPIK II preparation and Writing Lab workflow demos.
