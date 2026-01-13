@@ -1,182 +1,952 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List - Vazifalar Ro'yxati</title>
+    <title>TOPIK AI Coach</title>
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="theme-color" content="#111827">
 </head>
 <body>
-    <div class="container">
-        <div class="todo-app">
-            <div class="header">
-                <h1>📝 Vazifalar Ro'yxati</h1>
-                <p class="subtitle">Kunlik vazifalaringizni boshqaring</p>
+    <div id="app" class="app-shell" data-theme="light">
+        <div id="splash" class="screen splash-screen active">
+            <div class="splash-logo">
+                <div class="logo-badge">TOPIK</div>
+                <h1>TOPIK AI Coach</h1>
+                <p>Mobile-first TOPIK II prep</p>
             </div>
-            
-            <div class="input-section">
-                <input 
-                    type="text" 
-                    id="todoInput" 
-                    placeholder="Yangi vazifa qo'shing..." 
-                    autocomplete="off"
-                >
-                <button id="addBtn" class="add-btn">Qo'shish</button>
+            <div class="loader"></div>
+        </div>
+
+        <section id="auth" class="screen auth-screen">
+            <div class="phone-frame">
+                <header class="app-header minimal">
+                    <div class="app-title">TOPIK AI Coach</div>
+                    <div class="header-actions">
+                        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">🌓</button>
+                        <button class="icon-btn" id="languageToggle" aria-label="Change language">🌐</button>
+                    </div>
+                </header>
+
+                <div class="auth-card">
+                    <div class="segmented">
+                        <button class="segmented-btn active" data-auth-tab="login">Log in</button>
+                        <button class="segmented-btn" data-auth-tab="register">Register</button>
+                    </div>
+
+                    <form id="loginForm" class="auth-form active">
+                        <label>
+                            <span>Email</span>
+                            <input type="email" placeholder="you@example.com" required>
+                        </label>
+                        <label>
+                            <span>Password</span>
+                            <input type="password" placeholder="••••••••" required>
+                        </label>
+                        <button type="submit" class="primary-btn">Log in</button>
+                        <button type="button" class="link-btn" id="forgotPasswordBtn">Forgot password?</button>
+                    </form>
+
+                    <form id="registerForm" class="auth-form">
+                        <label>
+                            <span>Email</span>
+                            <input type="email" placeholder="you@example.com" required>
+                        </label>
+                        <label>
+                            <span>Password</span>
+                            <input type="password" placeholder="Create password" required>
+                        </label>
+                        <label>
+                            <span>Confirm password</span>
+                            <input type="password" placeholder="Repeat password" required>
+                        </label>
+                        <button type="submit" class="primary-btn">Create account</button>
+                    </form>
+
+                    <div class="auth-hint" id="forgotPasswordPanel">
+                        <p>Reset link sent to your email. (Demo)</p>
+                    </div>
+                </div>
             </div>
-            
-            <div class="stats">
-                <span id="totalCount">Jami: 0</span>
-                <span id="completedCount">Bajarildi: 0</span>
+        </section>
+
+        <section id="profile-setup" class="screen profile-setup">
+            <div class="phone-frame">
+                <header class="app-header">
+                    <div class="app-title">Profile Setup</div>
+                    <div class="step-indicator" id="stepIndicator">Step 1 of 5</div>
+                </header>
+
+                <div class="wizard">
+                    <div class="wizard-step active" data-step="1">
+                        <h2>Full Name</h2>
+                        <p class="muted">Tell us how to address you.</p>
+                        <input type="text" id="fullName" placeholder="Full name" required>
+                    </div>
+
+                    <div class="wizard-step" data-step="2">
+                        <h2>Choose a Username</h2>
+                        <p class="muted">Unique nickname used across the app.</p>
+                        <input type="text" id="nickname" placeholder="@nickname" required>
+                        <p id="nicknameStatus" class="status"></p>
+                    </div>
+
+                    <div class="wizard-step" data-step="3">
+                        <h2>Current Korean Level</h2>
+                        <div class="pill-group" id="currentLevel">
+                            <button class="pill active" data-value="Beginner">Beginner</button>
+                            <button class="pill" data-value="Intermediate">Intermediate</button>
+                            <button class="pill" data-value="Advanced">Advanced</button>
+                        </div>
+                        <label class="field">
+                            <span>Optional TOPIK level</span>
+                            <input type="text" id="optionalTopik" placeholder="TOPIK I/II">
+                        </label>
+                    </div>
+
+                    <div class="wizard-step" data-step="4">
+                        <h2>Goals & Schedule</h2>
+                        <label class="field">
+                            <span>Target TOPIK level</span>
+                            <select id="goalLevel">
+                                <option value="TOPIK 3">TOPIK 3</option>
+                                <option value="TOPIK 4" selected>TOPIK 4</option>
+                                <option value="TOPIK 5">TOPIK 5</option>
+                                <option value="TOPIK 6">TOPIK 6</option>
+                            </select>
+                        </label>
+                        <label class="field">
+                            <span>Exam date</span>
+                            <input type="date" id="examDate" required>
+                        </label>
+                        <label class="field">
+                            <span>Daily study minutes</span>
+                            <input type="number" id="dailyMinutes" min="10" max="240" value="40" required>
+                        </label>
+                    </div>
+
+                    <div class="wizard-step" data-step="5">
+                        <h2>Profile Photo</h2>
+                        <p class="muted">Choose a built-in avatar or upload your own.</p>
+                        <div class="avatar-grid" id="avatarGrid"></div>
+                        <label class="upload-card">
+                            <input type="file" id="photoUpload" accept="image/png,image/jpeg,image/webp">
+                            <span>Upload photo (max 3MB)</span>
+                        </label>
+                        <div id="photoPreview" class="photo-preview"></div>
+                    </div>
+                </div>
+
+                <div class="wizard-actions">
+                    <button class="secondary-btn" id="prevStep">Back</button>
+                    <button class="primary-btn" id="nextStep">Next</button>
+                </div>
             </div>
-            
-            <ul id="todoList" class="todo-list">
-                <!-- Todos will be inserted here -->
-            </ul>
-            
-            <div id="emptyState" class="empty-state">
-                <p>📋 Hozircha vazifalar yo'q</p>
-                <p class="empty-hint">Yuqoridagi maydonga yozib vazifa qo'shing</p>
+        </section>
+
+        <section id="main" class="screen main-app">
+            <div class="phone-frame">
+                <header class="app-header">
+                    <div class="app-title" id="screenTitle">Overview</div>
+                    <div class="header-actions">
+                        <button class="chip" id="xpChip">Lv 1 · Newbie</button>
+                        <button class="icon-btn" id="explanationToggle" aria-label="Explanation language">🈯</button>
+                        <button class="icon-btn" id="mainThemeToggle" aria-label="Toggle theme">🌓</button>
+                    </div>
+                </header>
+
+                <div class="app-content">
+                    <section id="tab-overview" class="tab-content active">
+                        <div class="hero-card">
+                            <div>
+                                <h2 id="welcomeText">Welcome back</h2>
+                                <p class="muted" id="todayPlan">Today: Writing practice + Grammar review</p>
+                            </div>
+                            <div class="stat-pill">🔥 <span id="streakCount">0</span> day streak</div>
+                        </div>
+
+                        <div class="grid">
+                            <div class="card">
+                                <h3>XP Progress</h3>
+                                <div class="progress">
+                                    <div class="progress-bar" id="xpBar"></div>
+                                </div>
+                                <p class="muted" id="xpProgress">0 / 200 XP</p>
+                            </div>
+                            <div class="card">
+                                <h3>Coins</h3>
+                                <p class="coins" id="coinBalance">120</p>
+                                <button class="secondary-btn" id="quickTopUp">Top up (Demo)</button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Today Tasks</h3>
+                            <ul class="task-list">
+                                <li>Grammar drill · 15 mins</li>
+                                <li>Reading mini test · 20 mins</li>
+                                <li>Writing Task 54 · 25 mins</li>
+                            </ul>
+                            <div class="quick-actions">
+                                <button class="primary-btn" data-action="practice">Start Quiz</button>
+                                <button class="secondary-btn" data-action="writing">Writing Lab</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="tab-practice" class="tab-content">
+                        <div class="card">
+                            <h3>Practice Mode</h3>
+                            <div class="pill-group" id="practiceSkills">
+                                <button class="pill active" data-skill="Grammar">Grammar</button>
+                                <button class="pill" data-skill="Vocabulary">Vocabulary</button>
+                                <button class="pill" data-skill="Reading">Reading</button>
+                                <button class="pill" data-skill="Listening">Listening</button>
+                            </div>
+                            <div class="pill-group" id="practiceDifficulty">
+                                <button class="pill active" data-level="Easy">Easy</button>
+                                <button class="pill" data-level="Medium">Medium</button>
+                                <button class="pill" data-level="Hard">Hard</button>
+                            </div>
+                        </div>
+
+                        <div class="card question-card">
+                            <p class="label">Question (TOPIK II)</p>
+                            <h3>다음 문장에서 알맞은 것을 고르십시오.</h3>
+                            <p class="question">한국어 공부를 시작한 지 벌써 6개월이 ____.</p>
+                            <div class="option-grid">
+                                <button class="option">A. 되었다</button>
+                                <button class="option">B. 된다</button>
+                                <button class="option">C. 되면</button>
+                                <button class="option">D. 될까</button>
+                            </div>
+                            <div class="explanation">
+                                <div class="tab-row">
+                                    <button class="tab-btn active" data-explanation-tab="explanation">Explanation</button>
+                                    <button class="tab-btn" data-explanation-tab="grammar">Grammar</button>
+                                    <button class="tab-btn" data-explanation-tab="vocab">Vocabulary</button>
+                                </div>
+                                <div id="explanationContent" class="explanation-content"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="tab-writing" class="tab-content">
+                        <div class="card">
+                            <h3>Writing Lab (TOPIK II)</h3>
+                            <p class="muted">Select a prompt and submit your essay for AI feedback.</p>
+                            <div class="prompt-list" id="promptList"></div>
+                        </div>
+
+                        <div class="card">
+                            <div class="editor-header">
+                                <div>
+                                    <h3>Essay Editor</h3>
+                                    <p class="muted" id="selectedPrompt">Prompt: 도시에서 살 때의 장단점에 대해 쓰십시오.</p>
+                                </div>
+                                <div class="timer">⏱ 28:00</div>
+                            </div>
+                            <textarea id="essayInput" rows="8" placeholder="한국어로 에세이를 작성하세요..."></textarea>
+                            <div class="editor-footer">
+                                <span id="wordCount">0 words</span>
+                                <button class="primary-btn" id="submitEssay">Submit</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="tab-store" class="tab-content">
+                        <div class="card store-header">
+                            <div>
+                                <h3>Store & Customization</h3>
+                                <p class="muted">Buy cosmetics with coins or demo payments.</p>
+                            </div>
+                            <button class="secondary-btn" id="openWallet">Wallet</button>
+                        </div>
+
+                        <div class="pill-group" id="storeFilters">
+                            <button class="pill active" data-filter="all">All</button>
+                            <button class="pill" data-filter="avatar">Avatars</button>
+                            <button class="pill" data-filter="frame">Frames</button>
+                            <button class="pill" data-filter="background">Backgrounds</button>
+                        </div>
+
+                        <div class="store-grid" id="storeGrid"></div>
+                    </section>
+
+                    <section id="tab-profile" class="tab-content">
+                        <div class="card profile-card">
+                            <div class="profile-hero" id="profileHero"></div>
+                            <div>
+                                <h3 id="profileName">Student</h3>
+                                <p class="muted" id="profileMeta">Level 1 · Newbie</p>
+                                <div class="profile-stats">
+                                    <div>
+                                        <span class="stat-label">XP</span>
+                                        <strong id="profileXp">0</strong>
+                                    </div>
+                                    <div>
+                                        <span class="stat-label">Coins</span>
+                                        <strong id="profileCoins">0</strong>
+                                    </div>
+                                    <div>
+                                        <span class="stat-label">Streak</span>
+                                        <strong id="profileStreak">0</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Settings</h3>
+                            <label class="field">
+                                <span>UI language</span>
+                                <select id="uiLanguageSelect"></select>
+                            </label>
+                            <label class="field">
+                                <span>Explanation language</span>
+                                <select id="explanationLanguageSelect"></select>
+                            </label>
+                            <label class="field">
+                                <span>Theme</span>
+                                <select id="themeSelect">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                </select>
+                            </label>
+                            <button class="secondary-btn" id="logoutBtn">Log out</button>
+                        </div>
+                    </section>
+                </div>
+
+                <nav class="bottom-nav">
+                    <button class="nav-item active" data-tab="overview">Overview</button>
+                    <button class="nav-item" data-tab="practice">Practice</button>
+                    <button class="nav-item" data-tab="writing">Writing Lab</button>
+                    <button class="nav-item" data-tab="store">Store</button>
+                    <button class="nav-item" data-tab="profile">Profile</button>
+                </nav>
+            </div>
+        </section>
+
+        <div id="walletModal" class="modal">
+            <div class="modal-content">
+                <h3>Wallet & Top-up (Demo)</h3>
+                <p class="muted">All payment providers are sandbox/demo only.</p>
+                <div class="payment-grid">
+                    <button class="payment-card" data-provider="stripe">Card · Stripe Sandbox</button>
+                    <button class="payment-card" data-provider="local">Humo/Uzcard Demo</button>
+                    <button class="payment-card" data-provider="crypto">Bitcoin Demo</button>
+                </div>
+                <div id="paymentPanel" class="payment-panel"></div>
+                <button class="secondary-btn" id="closeWallet">Close</button>
             </div>
         </div>
+
+        <div id="writingResult" class="modal">
+            <div class="modal-content">
+                <h3>Writing Feedback (Demo)</h3>
+                <div id="writingFeedback"></div>
+                <button class="primary-btn" id="closeWriting">Done</button>
+            </div>
+        </div>
+
+        <div id="toast" class="toast"></div>
     </div>
-    
+
     <script>
-        // DOM elements
-        const todoInput = document.getElementById('todoInput');
-        const addBtn = document.getElementById('addBtn');
-        const todoList = document.getElementById('todoList');
-        const emptyState = document.getElementById('emptyState');
-        const totalCount = document.getElementById('totalCount');
-        const completedCount = document.getElementById('completedCount');
-        
-        // Load todos on page load
-        loadTodos();
-        
-        // Add todo on button click
-        addBtn.addEventListener('click', addTodo);
-        
-        // Add todo on Enter key
-        todoInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addTodo();
+        const state = {
+            auth: JSON.parse(localStorage.getItem('auth')) || { loggedIn: false },
+            profile: JSON.parse(localStorage.getItem('profile')) || null,
+            stats: JSON.parse(localStorage.getItem('stats')) || {
+                xp: 120,
+                level: 1,
+                title: 'Newbie',
+                coins: 120,
+                streak: 2,
+                lastActive: new Date().toISOString()
+            },
+            uiLanguage: localStorage.getItem('uiLanguage') || 'EN',
+            explanationLanguage: localStorage.getItem('explanationLanguage') || 'EN',
+            theme: localStorage.getItem('theme') || 'light',
+            nicknamePool: JSON.parse(localStorage.getItem('nicknames')) || ['topikpro', 'seoulstudy']
+        };
+
+        const i18n = {
+            EN: {
+                welcome: 'Welcome back',
+                today: 'Today: Writing practice + Grammar review',
+                login: 'Log in',
+                register: 'Register',
+                explanation: 'Explanation',
+                grammar: 'Grammar',
+                vocabulary: 'Vocabulary'
+            },
+            UZ: {
+                welcome: 'Xush kelibsiz',
+                today: 'Bugun: Writing mashqi + Grammatika',
+                login: 'Kirish',
+                register: "Ro'yxatdan o'tish",
+                explanation: 'Tushuntirish',
+                grammar: 'Grammatika',
+                vocabulary: "Lug'at"
+            },
+            RU: {
+                welcome: 'С возвращением',
+                today: 'Сегодня: Письмо + грамматика',
+                login: 'Войти',
+                register: 'Регистрация',
+                explanation: 'Объяснение',
+                grammar: 'Грамматика',
+                vocabulary: 'Лексика'
+            }
+        };
+
+        const explanationCopy = {
+            EN: {
+                explanation: 'Correct answer: A. 되었다. The pattern "-게 되다" expresses a change over time. Here we use the past tense to show six months have passed.',
+                grammar: 'Grammar note: "-게 되다" indicates a change or result. Past form "-게 되었다" means it has become/has happened.',
+                vocab: 'Vocabulary: 공부하다 (to study), 시작하다 (to start), 벌써 (already).'
+            },
+            UZ: {
+                explanation: 'To‘g‘ri javob: A. 되었다. "-게 되다" o‘zgarish yoki vaqt o‘tishi natijasini bildiradi. 6 oy o‘tganini ko‘rsatish uchun o‘tgan zamon ishlatiladi.',
+                grammar: 'Grammatika: "-게 되다" o‘zgarish natijasini bildiradi. "-게 되었다" — o‘tgan zamon.',
+                vocab: 'Leksika: 공부하다 (o‘qimoq), 시작하다 (boshlamoq), 벌써 (allaqachon).'
+            },
+            RU: {
+                explanation: 'Правильный ответ: A. 되었다. Конструкция "-게 되다" обозначает изменение или результат со временем. Прошедшее время показывает, что прошло 6 месяцев.',
+                grammar: 'Грамматика: "-게 되다" — результат/изменение. "-게 되었다" — прошедшее время.',
+                vocab: 'Лексика: 공부하다 (учить), 시작하다 (начинать), 벌써 (уже).'
+            }
+        };
+
+        const levels = [
+            { level: 1, xp: 0, title: 'Newbie' },
+            { level: 2, xp: 200, title: 'Learner' },
+            { level: 3, xp: 450, title: 'TOPIK Warrior' },
+            { level: 4, xp: 800, title: 'Master' }
+        ];
+
+        const storeItems = [
+            { id: 'avatar-1', name: 'Scholar', type: 'avatar', price: 80 },
+            { id: 'avatar-2', name: 'Seoul Night', type: 'avatar', price: 120 },
+            { id: 'frame-1', name: 'Gold Frame', type: 'frame', price: 150 },
+            { id: 'bg-1', name: 'Library', type: 'background', price: 200 }
+        ];
+
+        const ownedItems = JSON.parse(localStorage.getItem('ownedItems')) || ['avatar-1'];
+        const activeItems = JSON.parse(localStorage.getItem('activeItems')) || { avatar: 'avatar-1' };
+
+        const prompts = [
+            '도시에서 살 때의 장단점에 대해 쓰십시오.',
+            '현대 사회에서 온라인 교육의 역할을 설명하십시오.',
+            '환경 보호를 위해 개인이 할 수 있는 일을 쓰십시오.'
+        ];
+
+        const app = document.getElementById('app');
+        const splash = document.getElementById('splash');
+        const authScreen = document.getElementById('auth');
+        const profileSetup = document.getElementById('profile-setup');
+        const mainScreen = document.getElementById('main');
+
+        const nicknameInput = document.getElementById('nickname');
+        const nicknameStatus = document.getElementById('nicknameStatus');
+        const stepIndicator = document.getElementById('stepIndicator');
+        const steps = Array.from(document.querySelectorAll('.wizard-step'));
+        const prevStepBtn = document.getElementById('prevStep');
+        const nextStepBtn = document.getElementById('nextStep');
+        let currentStep = 1;
+
+        const explanationContent = document.getElementById('explanationContent');
+        const explanationTabs = document.querySelectorAll('.tab-btn');
+
+        const storeGrid = document.getElementById('storeGrid');
+        const promptList = document.getElementById('promptList');
+        const selectedPrompt = document.getElementById('selectedPrompt');
+        const essayInput = document.getElementById('essayInput');
+        const wordCount = document.getElementById('wordCount');
+
+        const toast = document.getElementById('toast');
+        const walletModal = document.getElementById('walletModal');
+        const paymentPanel = document.getElementById('paymentPanel');
+
+        const writingModal = document.getElementById('writingResult');
+        const writingFeedback = document.getElementById('writingFeedback');
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2600);
+        }
+
+        function saveState() {
+            localStorage.setItem('auth', JSON.stringify(state.auth));
+            localStorage.setItem('profile', JSON.stringify(state.profile));
+            localStorage.setItem('stats', JSON.stringify(state.stats));
+            localStorage.setItem('uiLanguage', state.uiLanguage);
+            localStorage.setItem('explanationLanguage', state.explanationLanguage);
+            localStorage.setItem('theme', state.theme);
+            localStorage.setItem('nicknames', JSON.stringify(state.nicknamePool));
+            localStorage.setItem('ownedItems', JSON.stringify(ownedItems));
+            localStorage.setItem('activeItems', JSON.stringify(activeItems));
+        }
+
+        function setTheme(theme) {
+            state.theme = theme;
+            app.dataset.theme = theme;
+            saveState();
+        }
+
+        function setLanguage(lang) {
+            state.uiLanguage = lang;
+            saveState();
+            updateCopy();
+        }
+
+        function setExplanationLanguage(lang) {
+            state.explanationLanguage = lang;
+            saveState();
+            updateExplanation();
+        }
+
+        function updateCopy() {
+            const copy = i18n[state.uiLanguage];
+            document.getElementById('welcomeText').textContent = copy.welcome;
+            document.getElementById('todayPlan').textContent = copy.today;
+            document.querySelector('[data-auth-tab="login"]').textContent = copy.login;
+            document.querySelector('[data-auth-tab="register"]').textContent = copy.register;
+            document.querySelector('[data-explanation-tab="explanation"]').textContent = copy.explanation;
+            document.querySelector('[data-explanation-tab="grammar"]').textContent = copy.grammar;
+            document.querySelector('[data-explanation-tab="vocab"]').textContent = copy.vocabulary;
+        }
+
+        function updateExplanation(tab = 'explanation') {
+            const lang = state.explanationLanguage;
+            if (tab === 'explanation') explanationContent.textContent = explanationCopy[lang].explanation;
+            if (tab === 'grammar') explanationContent.textContent = explanationCopy[lang].grammar;
+            if (tab === 'vocab') explanationContent.textContent = explanationCopy[lang].vocab;
+        }
+
+        function updateStatsUI() {
+            const nextLevel = levels.find(level => level.level === state.stats.level + 1) || levels[levels.length - 1];
+            const maxXp = nextLevel.xp;
+            const progress = Math.min((state.stats.xp / maxXp) * 100, 100);
+            document.getElementById('xpBar').style.width = `${progress}%`;
+            document.getElementById('xpProgress').textContent = `${state.stats.xp} / ${maxXp} XP`;
+            document.getElementById('coinBalance').textContent = state.stats.coins;
+            document.getElementById('streakCount').textContent = state.stats.streak;
+            document.getElementById('xpChip').textContent = `Lv ${state.stats.level} · ${state.stats.title}`;
+            document.getElementById('profileXp').textContent = state.stats.xp;
+            document.getElementById('profileCoins').textContent = state.stats.coins;
+            document.getElementById('profileStreak').textContent = state.stats.streak;
+        }
+
+        function updateProfileUI() {
+            const name = state.profile?.fullName || 'Student';
+            document.getElementById('profileName').textContent = name;
+            document.getElementById('profileMeta').textContent = `Level ${state.stats.level} · ${state.stats.title}`;
+            document.getElementById('welcomeText').textContent = `${i18n[state.uiLanguage].welcome}, ${name.split(' ')[0]}`;
+            document.getElementById('profileHero').style.backgroundImage = `url('${state.profile?.photo || ''}')`;
+        }
+
+        function updateTabs() {
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(section => section.classList.remove('active'));
+                    document.getElementById(`tab-${tab}`).classList.add('active');
+                    document.getElementById('screenTitle').textContent = btn.textContent;
+                });
+            });
+        }
+
+        function renderStore(filter = 'all') {
+            storeGrid.innerHTML = '';
+            storeItems
+                .filter(item => filter === 'all' || item.type === filter)
+                .forEach(item => {
+                    const card = document.createElement('div');
+                    const owned = ownedItems.includes(item.id);
+                    card.className = 'store-card';
+                    card.innerHTML = `
+                        <div class="store-asset">${item.name.charAt(0)}</div>
+                        <h4>${item.name}</h4>
+                        <p class="muted">${item.type}</p>
+                        <div class="store-footer">
+                            <span class="price">${item.price} coins</span>
+                            <button class="${owned ? 'secondary-btn' : 'primary-btn'}" data-item="${item.id}">
+                                ${owned ? 'Owned' : 'Buy'}
+                            </button>
+                        </div>
+                    `;
+                    storeGrid.appendChild(card);
+                });
+        }
+
+        function renderPrompts() {
+            promptList.innerHTML = '';
+            prompts.forEach((prompt, index) => {
+                const button = document.createElement('button');
+                button.className = 'prompt-card';
+                button.textContent = `Prompt ${index + 1}: ${prompt}`;
+                button.addEventListener('click', () => {
+                    selectedPrompt.textContent = `Prompt: ${prompt}`;
+                });
+                promptList.appendChild(button);
+            });
+        }
+
+        function initializeWizard() {
+            document.getElementById('avatarGrid').innerHTML = ['1', '2', '3', '4'].map(id => `
+                <button class="avatar-btn" data-avatar="${id}">
+                    <span>AI</span>
+                </button>
+            `).join('');
+        }
+
+        function updateWizard() {
+            steps.forEach(step => step.classList.remove('active'));
+            document.querySelector(`.wizard-step[data-step="${currentStep}"]`).classList.add('active');
+            stepIndicator.textContent = `Step ${currentStep} of 5`;
+            prevStepBtn.disabled = currentStep === 1;
+            nextStepBtn.textContent = currentStep === 5 ? 'Finish' : 'Next';
+        }
+
+        function validateNickname() {
+            const value = nicknameInput.value.trim().toLowerCase();
+            if (!value) {
+                nicknameStatus.textContent = 'Nickname is required.';
+                nicknameStatus.className = 'status error';
+                return false;
+            }
+            if (state.nicknamePool.includes(value)) {
+                nicknameStatus.textContent = 'Nickname already taken.';
+                nicknameStatus.className = 'status error';
+                return false;
+            }
+            nicknameStatus.textContent = 'Nickname is available.';
+            nicknameStatus.className = 'status success';
+            return true;
+        }
+
+        function completeProfile() {
+            const fullName = document.getElementById('fullName').value.trim();
+            const nickname = nicknameInput.value.trim().toLowerCase();
+            if (!fullName || !validateNickname()) {
+                showToast('Please complete all required fields.');
+                return;
+            }
+            state.profile = {
+                fullName,
+                nickname,
+                currentLevel: document.querySelector('#currentLevel .pill.active').dataset.value,
+                goalLevel: document.getElementById('goalLevel').value,
+                examDate: document.getElementById('examDate').value,
+                dailyMinutes: document.getElementById('dailyMinutes').value,
+                photo: document.querySelector('.avatar-btn.selected')?.dataset.src || ''
+            };
+            state.nicknamePool.push(nickname);
+            saveState();
+            showScreen(mainScreen);
+            updateProfileUI();
+        }
+
+        function showScreen(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            screen.classList.add('active');
+        }
+
+        function initializeApp() {
+            setTheme(state.theme);
+            updateCopy();
+            updateExplanation();
+            updateStatsUI();
+            updateProfileUI();
+            updateTabs();
+            renderStore();
+            renderPrompts();
+            initializeWizard();
+            if (!state.auth.loggedIn) {
+                showScreen(authScreen);
+                return;
+            }
+            if (!state.profile) {
+                showScreen(profileSetup);
+                return;
+            }
+            showScreen(mainScreen);
+        }
+
+        setTimeout(() => {
+            splash.classList.remove('active');
+            initializeApp();
+        }, 1500);
+
+        document.querySelectorAll('.segmented-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.segmented-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+                document.getElementById(`${btn.dataset.authTab}Form`).classList.add('active');
+            });
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+            state.auth.loggedIn = true;
+            saveState();
+            showScreen(state.profile ? mainScreen : profileSetup);
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+            state.auth.loggedIn = true;
+            saveState();
+            showScreen(profileSetup);
+        });
+
+        document.getElementById('forgotPasswordBtn').addEventListener('click', () => {
+            document.getElementById('forgotPasswordPanel').classList.add('active');
+        });
+
+        nicknameInput.addEventListener('input', validateNickname);
+
+        prevStepBtn.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep -= 1;
+                updateWizard();
             }
         });
-        
-        // Load todos from server
-        async function loadTodos() {
-            try {
-                const response = await fetch('/api/todos');
-                const todos = await response.json();
-                renderTodos(todos);
-                updateStats(todos);
-            } catch (error) {
-                console.error('Error loading todos:', error);
+
+        nextStepBtn.addEventListener('click', () => {
+            if (currentStep === 2 && !validateNickname()) {
+                return;
             }
-        }
-        
-        // Add new todo
-        async function addTodo() {
-            const text = todoInput.value.trim();
-            if (!text) return;
-            
-            try {
-                const response = await fetch('/api/todos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ text: text })
-                });
-                
-                if (response.ok) {
-                    todoInput.value = '';
-                    loadTodos();
+            if (currentStep === 5) {
+                completeProfile();
+                return;
+            }
+            currentStep += 1;
+            updateWizard();
+        });
+
+        document.getElementById('avatarGrid').addEventListener('click', (event) => {
+            const button = event.target.closest('.avatar-btn');
+            if (!button) return;
+            document.querySelectorAll('.avatar-btn').forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${button.dataset.avatar}`;
+            button.dataset.src = avatarUrl;
+            document.getElementById('photoPreview').innerHTML = `<img src="${avatarUrl}" alt="Avatar preview">`;
+        });
+
+        document.getElementById('photoUpload').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 3 * 1024 * 1024) {
+                showToast('Image exceeds 3MB limit.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" alt="Profile preview">`;
+                const selected = document.querySelector('.avatar-btn.selected');
+                if (selected) selected.classList.remove('selected');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            setTheme(state.theme === 'light' ? 'dark' : 'light');
+        });
+
+        document.getElementById('mainThemeToggle').addEventListener('click', () => {
+            setTheme(state.theme === 'light' ? 'dark' : 'light');
+        });
+
+        document.getElementById('languageToggle').addEventListener('click', () => {
+            const options = ['EN', 'UZ', 'RU'];
+            const next = options[(options.indexOf(state.uiLanguage) + 1) % options.length];
+            setLanguage(next);
+        });
+
+        document.getElementById('explanationToggle').addEventListener('click', () => {
+            const options = ['EN', 'UZ', 'RU'];
+            const next = options[(options.indexOf(state.explanationLanguage) + 1) % options.length];
+            setExplanationLanguage(next);
+        });
+
+        explanationTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                explanationTabs.forEach(btn => btn.classList.remove('active'));
+                tab.classList.add('active');
+                updateExplanation(tab.dataset.explanationTab);
+            });
+        });
+
+        document.querySelectorAll('#storeFilters .pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#storeFilters .pill').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                renderStore(btn.dataset.filter);
+            });
+        });
+
+        storeGrid.addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if (!button) return;
+            const itemId = button.dataset.item;
+            if (!itemId) return;
+            if (ownedItems.includes(itemId)) {
+                showToast('Item already owned.');
+                return;
+            }
+            const item = storeItems.find(i => i.id === itemId);
+            if (state.stats.coins < item.price) {
+                showToast('Not enough coins. Top up in wallet.');
+                return;
+            }
+            state.stats.coins -= item.price;
+            ownedItems.push(itemId);
+            saveState();
+            updateStatsUI();
+            renderStore(document.querySelector('#storeFilters .pill.active').dataset.filter);
+            showToast(`Purchased ${item.name}!`);
+        });
+
+        document.getElementById('openWallet').addEventListener('click', () => {
+            walletModal.classList.add('active');
+        });
+
+        document.getElementById('closeWallet').addEventListener('click', () => {
+            walletModal.classList.remove('active');
+            paymentPanel.innerHTML = '';
+        });
+
+        document.getElementById('quickTopUp').addEventListener('click', () => {
+            walletModal.classList.add('active');
+        });
+
+        document.querySelectorAll('.payment-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const provider = card.dataset.provider;
+                if (provider === 'stripe') {
+                    paymentPanel.innerHTML = `
+                        <h4>Stripe Sandbox</h4>
+                        <p class="muted">Use test card 4242 4242 4242 4242.</p>
+                        <button class="primary-btn" id="stripePay">Pay $5 (Demo)</button>
+                    `;
                 }
-            } catch (error) {
-                console.error('Error adding todo:', error);
-            }
-        }
-        
-        // Delete todo
-        async function deleteTodo(id) {
-            try {
-                const response = await fetch(`/api/todos/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    loadTodos();
+                if (provider === 'local') {
+                    paymentPanel.innerHTML = `
+                        <h4>Humo/Uzcard Demo</h4>
+                        <label class="field"><span>Card type</span><select><option>Humo</option><option>Uzcard</option></select></label>
+                        <button class="primary-btn" id="localPay">Simulate success</button>
+                    `;
                 }
-            } catch (error) {
-                console.error('Error deleting todo:', error);
-            }
-        }
-        
-        // Toggle todo completion
-        async function toggleTodo(id) {
-            try {
-                const response = await fetch(`/api/todos/${id}`, {
-                    method: 'PUT'
-                });
-                
-                if (response.ok) {
-                    loadTodos();
+                if (provider === 'crypto') {
+                    paymentPanel.innerHTML = `
+                        <h4>Bitcoin Demo</h4>
+                        <p class="muted">Address: bc1demo1234... Amount: 0.0005 BTC</p>
+                        <label class="field"><span>TX Hash</span><input type="text" placeholder="Paste hash"></label>
+                        <button class="primary-btn" id="cryptoPay">Mark as paid (Demo)</button>
+                    `;
                 }
-            } catch (error) {
-                console.error('Error toggling todo:', error);
+            });
+        });
+
+        paymentPanel.addEventListener('click', (event) => {
+            if (event.target.id === 'stripePay' || event.target.id === 'localPay' || event.target.id === 'cryptoPay') {
+                state.stats.coins += 300;
+                updateStatsUI();
+                saveState();
+                showToast('Demo payment successful. +300 coins');
             }
+        });
+
+        essayInput.addEventListener('input', () => {
+            const words = essayInput.value.trim().split(/\s+/).filter(Boolean);
+            wordCount.textContent = `${words.length} words`;
+        });
+
+        document.getElementById('submitEssay').addEventListener('click', () => {
+            writingFeedback.innerHTML = `
+                <div class="feedback-grid">
+                    <div class="feedback-card">Task fulfillment: 3/5</div>
+                    <div class="feedback-card">Coherence: 3/5</div>
+                    <div class="feedback-card">Grammar: 2/5</div>
+                    <div class="feedback-card">Vocabulary: 3/5</div>
+                    <div class="feedback-card">Formal tone: 4/5</div>
+                </div>
+                <p class="muted">Estimated score: 34-38/50</p>
+                <p>Corrections: 조사 사용이 불안정합니다. 따라서, "도시에 살 때" 표현을 더 명확히 하세요.</p>
+                <p class="muted">Rewrite suggestion: ...</p>
+            `;
+            writingModal.classList.add('active');
+            state.stats.xp += Math.min(50, essayInput.value.length / 8);
+            updateStatsUI();
+            saveState();
+        });
+
+        document.getElementById('closeWriting').addEventListener('click', () => {
+            writingModal.classList.remove('active');
+        });
+
+        document.querySelectorAll('.pill-group').forEach(group => {
+            group.addEventListener('click', (event) => {
+                const pill = event.target.closest('.pill');
+                if (!pill) return;
+                group.querySelectorAll('.pill').forEach(btn => btn.classList.remove('active'));
+                pill.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.quick-actions button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.action === 'practice' ? 'practice' : 'writing';
+                document.querySelector(`.nav-item[data-tab="${target}"]`).click();
+            });
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            state.auth.loggedIn = false;
+            saveState();
+            showScreen(authScreen);
+        });
+
+        document.getElementById('uiLanguageSelect').addEventListener('change', (event) => {
+            setLanguage(event.target.value);
+        });
+
+        document.getElementById('explanationLanguageSelect').addEventListener('change', (event) => {
+            setExplanationLanguage(event.target.value);
+        });
+
+        document.getElementById('themeSelect').addEventListener('change', (event) => {
+            setTheme(event.target.value);
+        });
+
+        window.addEventListener('load', () => {
+            updateWizard();
+            ['EN', 'UZ', 'RU'].forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang;
+                option.textContent = lang;
+                document.getElementById('uiLanguageSelect').appendChild(option.cloneNode(true));
+                document.getElementById('explanationLanguageSelect').appendChild(option);
+            });
+            document.getElementById('uiLanguageSelect').value = state.uiLanguage;
+            document.getElementById('explanationLanguageSelect').value = state.explanationLanguage;
+            document.getElementById('themeSelect').value = state.theme;
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/service-worker.js');
+            });
         }
-        
-        // Render todos
-        function renderTodos(todos) {
-            if (todos.length === 0) {
-                todoList.style.display = 'none';
-                emptyState.style.display = 'block';
-            } else {
-                todoList.style.display = 'block';
-                emptyState.style.display = 'none';
-                
-                todoList.innerHTML = todos.map(todo => `
-                    <li class="todo-item ${todo.completed ? 'completed' : ''}">
-                        <div class="todo-content">
-                            <input 
-                                type="checkbox" 
-                                class="todo-checkbox" 
-                                ${todo.completed ? 'checked' : ''}
-                                onchange="toggleTodo(${todo.id})"
-                            >
-                            <span class="todo-text">${escapeHtml(todo.text)}</span>
-                        </div>
-                        <button 
-                            class="delete-btn" 
-                            onclick="deleteTodo(${todo.id})"
-                            title="O'chirish"
-                        >
-                            🗑️
-                        </button>
-                    </li>
-                `).join('');
-            }
-        }
-        
-        // Update statistics
-        function updateStats(todos) {
-            const completed = todos.filter(t => t.completed).length;
-            totalCount.textContent = `Jami: ${todos.length}`;
-            completedCount.textContent = `Bajarildi: ${completed}`;
-        }
-        
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Make functions available globally
-        window.deleteTodo = deleteTodo;
-        window.toggleTodo = toggleTodo;
     </script>
 </body>
 </html>
-
